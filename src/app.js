@@ -43,9 +43,9 @@ setTheme(document.documentElement.dataset.theme === "light" ? "light" : "dark");
 
 /* ---------------- tabs ---------------- */
 const tabs = [["tabBtnAnim", "tabAnim"], ["tabBtnLogo", "tabLogo"]];
-function showTab(id) {
+function showTab(id, keep) {
   for (const [b, p] of tabs) { const on = b === id; $(b).setAttribute("aria-selected", on); $(p).hidden = !on; }
-  store.set("gcas-tab", id);
+  if (!keep) store.set("gcas-tab", id);
   if (id === "tabBtnLogo") scheduleLogo(); else scheduleAnim();
 }
 tabs.forEach(([b]) => $(b).addEventListener("click", () => showTab(b)));
@@ -526,6 +526,8 @@ function computeTimeline() {
 }
 function showIpl() {
   const has = !!IPL;
+  $("tabBtnLogo").disabled = !has; $("helpBtn").disabled = !has;
+  if (!has && !$("tabLogo").hidden) showTab("tabBtnAnim");
   $("iplEmpty").hidden = has; $("animGrid").hidden = !has; $("iplView").hidden = !has; $("previewTools").hidden = !has;
   if (!has) return;
   const mode = modeNow();
@@ -558,6 +560,7 @@ function loadIpl(buf, name, persist) {
   IPL = Object.assign(res, { name });
   if (persist) idb.put("ipl", { name, buf }).catch(() => {});
   if (persist && !store.get("gcas-tour-v1", false)) tourPending = true;
+  if (!persist && wantedTab === "tabBtnLogo") { showIpl(); showTab("tabBtnLogo"); return true; }   /* back where the last visit ended */
   showIpl(); return true;
 }
 /* drag and drop onto the drop zone (or anywhere while it is shown) */
@@ -864,7 +867,9 @@ applyLang(store.get("gcas-lang", null) || I.detect(), false);
 
 /* ---------------- start ---------------- */
 syncModelUI(); syncLogoUI();
-showTab(store.get("gcas-tab", "tabBtnAnim") === "tabBtnLogo" ? "tabBtnLogo" : "tabBtnAnim");
+/* until an IPL is loaded, only the drop zone is available: the Logotype tab and the tutorial wait for it */
+const wantedTab = store.get("gcas-tab", "tabBtnAnim") === "tabBtnLogo" ? "tabBtnLogo" : "tabBtnAnim";
+showTab("tabBtnAnim", true); $("tabBtnLogo").disabled = true; $("helpBtn").disabled = true;
 renderLogo();
 langReady = true;
 restoreFont();
