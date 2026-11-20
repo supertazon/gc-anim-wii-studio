@@ -1,2 +1,27 @@
-# gc-anim-wii-studio
-A studio to customize your GC intro animation for the Wii
+# GC-anim-Wii Studio
+
+A web page to customize [GC-anim-Wii](https://github.com/supertazon/GC-anim-Wii): edit `gc-anim.ini`, design the "GAMECUBE" logotype, and preview any frame of the boot animation rendered from your own GameCube IPL dump. The dump stays in your browser and is never uploaded; nothing from Nintendo is hosted here.
+
+## Use
+
+Open the page, load your `ipl.bin` (scrambled or not), change the settings, then **Save gc-anim-wii.zip** and unzip it at the root of the SD card or USB drive.
+
+**Export MP4** renders the whole animation (331 frames, 60 fps, 640×480 or 854×480 in 16:9) with the current settings and encodes it in the browser with WebCodecs: H.264 where available (Chrome, Edge, Safari), VP9 otherwise (e.g. Chromium builds without H.264, some Firefox versions). It takes a minute or two.
+
+All of GC-anim-Wii's `gc-anim.ini` settings can be edited, including `intro`, `delay`, `color = random` and `[smb]`. The preview and the MP4 follow `intro`: the IPL boot animation, or the promo intro (`src/promo.js`, a port of `promo.c`, 240 pictures at 60 Hz). With `color = random`, the preview shows one possible draw of the scheme (**New draw** for another), made with the program's own drawing code.
+
+A three-slide tutorial opens once, after the first IPL upload; the **?** button in the header shows it again. Its pictures are rendered at that moment from the user's own IPL, so nothing from Nintendo is stored in the page or the repo.
+
+## Layout
+
+- `src/` — the page's modules. Most are ports of GC-anim-Wii's own code (`config.c`, `recolor.c`, `scene.c`, `intro.c`, `anim.c`, `j3d.c`, `ipl.c`, `textimg.c`, `promo.c` with `anim_data.h`); `gx.js` is a small software GX renderer based on GC-anim-Wii's `tools/swr.py`; `mp4.js` is a minimal MP4 writer for the video export.
+- `template.html` — layout and styles.
+- `build.py` — inlines everything into one file, `docs/index.html`, which GitHub Pages serves. The page's icon is `docs/favicon.png` (add your own; the page works without it).
+- `tools/render_frame.js` — renders frames to PNG from the command line with the same code:
+  `node tools/render_frame.js ipl.bin [--ini gc-anim.ini] [--logo logo.png] [--wide] [--out dir] [frames...]` (an ini with `intro = promo` renders the promo intro)
+
+After changing `src/` or `template.html`, run `python3 build.py` and commit `docs/index.html`.
+
+## Translations
+
+The page is in English, French, Spanish, Portuguese (Brazil and Portugal), Italian, German, Japanese, Simplified Chinese and Korean. English text is the key: each `src/i18n/<lang>.js` maps an English string to its translation, and anything missing falls back to English. `python3 tools/i18n_strings.py` lists missing strings or broken `{placeholders}` per language; `--list` prints every English string.

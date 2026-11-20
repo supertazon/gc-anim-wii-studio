@@ -1,0 +1,655 @@
+<title>GC-anim-Wii Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Michroma&display=swap">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("gcas-theme")||"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
+<style>
+/* Layout: tabbed workbench. Each tab = preview bench (left, sticky) + settings rack (right); stacks on phones. */
+:root{
+  --bg:#eef0f5; --panel:#ffffff; --ink:#1b1d2a; --muted:#5d6278; --line:#d9dce8;
+  --accent:#5145c9; --accent-ink:#ffffff; --warn:#a1530a; --ok:#1e7a4c; --cube:#3d2fa3;
+  --f-display:"Sora","Segoe UI",system-ui,sans-serif;
+  --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12131b; --panel:#1b1d29; --ink:#e7e8f1; --muted:#9a9fb8; --line:#2d3044;
+  --accent:#8f86ff; --accent-ink:#12131b; --warn:#f0a75a; --ok:#5fd39a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12131b; --panel:#1b1d29; --ink:#e7e8f1; --muted:#9a9fb8; --line:#2d3044;
+  --accent:#8f86ff; --accent-ink:#12131b; --warn:#f0a75a; --ok:#5fd39a; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1260px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 20px}
+h1{font:700 1.55rem/1.15 var(--f-display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.hdr-right{display:flex;gap:10px;align-items:center}
+.langwrap{position:relative}
+.langbtn{display:inline-flex;align-items:center;gap:7px;height:2.4rem;padding:0 11px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 .88rem var(--f-body);cursor:pointer}
+.langbtn .ico{width:18px;height:18px}
+.langbtn .chev{width:11px;height:11px;color:var(--muted)}
+.langbtn:focus-visible,.langmenu li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.langmenu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;list-style:none;margin:0;padding:5px;min-width:15rem;white-space:nowrap;background:var(--panel);border:1px solid var(--line);border-radius:9px;box-shadow:0 10px 28px rgba(0,0,0,.28)}
+.langmenu li{padding:7px 10px;border-radius:6px;cursor:pointer;font-size:.9rem;display:flex;justify-content:space-between;gap:12px}
+.langmenu li:hover{background:var(--bg)}
+.langmenu li[aria-selected="true"]{color:var(--accent);font-weight:600}
+.langmenu li small{color:var(--muted);font:.72rem var(--f-mono)}
+:root:lang(ja){--f-body:"Figtree","Noto Sans JP",system-ui,sans-serif;--f-display:"Sora","Noto Sans JP",system-ui,sans-serif}
+:root:lang(zh-CN){--f-body:"Figtree","Noto Sans SC",system-ui,sans-serif;--f-display:"Sora","Noto Sans SC",system-ui,sans-serif}
+:root:lang(ko){--f-body:"Figtree","Noto Sans KR",system-ui,sans-serif;--f-display:"Sora","Noto Sans KR",system-ui,sans-serif}
+.field{grid-template-columns:minmax(6.5rem,max-content) minmax(0,1fr) 3.6rem}
+.field.wide{grid-template-columns:minmax(6.5rem,max-content) minmax(0,1fr)}
+.hdr-right{flex-wrap:wrap;justify-content:flex-end}
+.themebtn{width:2.4rem;height:2.4rem;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;display:grid;place-items:center;padding:0}
+.themebtn svg{width:18px;height:18px}
+.themebtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:3px}
+.tabs button{font:600 .9rem var(--f-body);border:0;background:none;color:var(--muted);padding:7px 14px;border-radius:6px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.bench{display:flex;flex-direction:column;gap:14px;min-width:0;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:900px){.bench{position:static}}
+.rack{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.label{font:600 .72rem var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row.between{justify-content:space-between}
+.note{font-size:.82rem;color:var(--muted);max-width:68ch;margin:0}
+.warn{font-size:.85rem;color:var(--warn)}
+.okmsg{font-size:.85rem;color:var(--ok)}
+details.card{gap:0}
+details.card>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font:600 .95rem var(--f-display)}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::after{content:"+";font:500 1.1rem var(--f-mono);color:var(--muted)}
+details[open].card>summary::after{content:"−"}
+details.card>.body{display:flex;flex-direction:column;gap:10px;padding-top:12px}
+.field{display:grid;grid-template-columns:7.5rem minmax(0,1fr) 3.6rem;gap:8px;align-items:center;font-size:.88rem}
+.field output{font:.78rem var(--f-mono);color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.field.wide{grid-template-columns:7.5rem minmax(0,1fr)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=text],textarea{font:500 .95rem var(--f-mono);width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+textarea{font-size:.8rem;line-height:1.45;resize:vertical}
+input[type=color]{width:2.4rem;height:1.8rem;padding:0;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer}
+select{font:inherit;padding:5px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.btn{font:600 .88rem var(--f-body);padding:8px 14px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.small{padding:4px 9px;font-size:.8rem}
+.btn:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,.tabs button:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+label.file{position:relative;overflow:hidden}
+label.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.chk{display:flex;gap:8px;align-items:center;font-size:.88rem}
+select:disabled,input:disabled{opacity:.45}
+code{font:.82em var(--f-mono)}
+
+/* color board */
+.scene{display:flex;flex-direction:column;gap:6px}
+.scene canvas{display:block;width:100%;max-width:704px;image-rendering:pixelated;border-radius:4px;border:1px solid var(--line)}
+.letters{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-height:1.6rem}
+.lt{font:600 .9rem var(--f-mono);width:1.6rem;height:1.6rem;display:grid;place-items:center;border-radius:4px;border:1px solid var(--line)}
+.lt.ipl{border-style:dashed}
+.lt.gap{border:0;width:.8rem}
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.sw{display:grid;grid-template-columns:2.2rem minmax(0,1fr);gap:2px 8px;align-items:center}
+.sw .chip{grid-row:span 2;width:2.2rem;height:2.2rem;border-radius:6px;border:1px solid var(--line)}
+.sw b{font:600 .85rem var(--f-body)}
+.sw small{font:.72rem var(--f-mono);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tiles{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px}
+@media (max-width:520px){.tiles{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.tile{aspect-ratio:1;border-radius:3px;border:1px solid color-mix(in srgb,var(--ink) 18%,transparent);position:relative;max-width:100%}
+.tile span{position:absolute;inset:auto 2px 1px auto;font:500 .6rem var(--f-mono);mix-blend-mode:difference;color:#fff}
+.tlwrap{overflow-x:auto}
+.tl{display:grid;gap:2px;font:.68rem var(--f-mono);color:var(--muted);min-width:520px}
+.tl .h{writing-mode:vertical-rl;transform:rotate(180deg);text-align:left;padding-bottom:2px;white-space:nowrap}
+.tl .rh{white-space:nowrap;padding-right:4px;align-self:center}
+.tl .c{height:13px;border-radius:2px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 14%,transparent)}
+.tl .c.empty{background:repeating-linear-gradient(45deg,transparent 0 3px,var(--line) 3px 4px)}
+.tl .sep{border-left:2px solid var(--ink)}
+.notes{display:flex;flex-direction:column;gap:2px}
+.listed{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.listed .item{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:6px;padding:2px}
+.listed .item span{font:.66rem var(--f-mono);color:var(--muted);padding:0 3px}
+.listed .item button{border:0;background:none;color:var(--muted);cursor:pointer;font:600 .9rem var(--f-body);padding:0 4px}
+.optrow{display:grid;grid-template-columns:7.5rem auto auto minmax(0,1fr);gap:8px;align-items:center;font-size:.88rem}
+.optrow small{font:.72rem var(--f-mono);color:var(--muted)}
+
+/* logotype */
+.zoomwrap{overflow-x:auto;border-radius:6px;border:1px solid var(--line)}
+.zoomwrap canvas{display:block;image-rendering:pixelated}
+.actual{display:flex;gap:14px;flex-wrap:wrap}
+.actual figure{margin:0;display:flex;flex-direction:column;gap:4px;max-width:100%}
+.actual figcaption{font:.72rem var(--f-mono);color:var(--muted)}
+.actual canvas{display:block;image-rendering:pixelated;border-radius:3px;max-width:100%}
+.sublabel{font:600 .78rem var(--f-body);color:var(--muted);margin-bottom:-4px}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.presets:empty{display:none}
+.pchip{font:500 .84rem var(--f-body);padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.pchip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.mine{display:inline-flex;align-items:stretch}
+.mine .pchip{border-radius:999px 0 0 999px}
+.mine .del{border-radius:0 999px 999px 0;border-left:none;padding:6px 9px;color:var(--muted)}
+.pairs{display:flex;flex-direction:column;gap:6px}
+.pairs .field{grid-template-columns:3.2rem minmax(0,1fr) 3.6rem}
+.pairs .pair{font:600 .9rem var(--f-mono);letter-spacing:.06em}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{font:600 .8rem var(--f-body);border:0;background:var(--bg);color:var(--muted);padding:5px 10px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.drop{display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding:18px;border:1px dashed var(--line);border-radius:8px}
+.drop p{margin:0}
+.screen{position:relative;background:#000;border-radius:6px;overflow:hidden;width:100%;aspect-ratio:4/3;max-width:100%}
+.screen.wide{aspect-ratio:16/9}
+.screen canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:auto}
+.busy{position:absolute;right:8px;bottom:8px;font:600 .75rem var(--f-body);color:#fff;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:5px}
+.scrub{display:grid;grid-template-columns:auto minmax(0,1fr) auto 5.5rem;gap:8px;align-items:center}
+.mono{font:.8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+.anim-grid{grid-template-areas:"prev rack" "bottom rack";grid-template-rows:auto 1fr}
+.anim-grid>.a-prev{grid-area:prev;min-width:0}
+.anim-grid>.rack{grid-area:rack}
+.anim-grid>.a-bottom{grid-area:bottom;min-width:0;display:flex;flex-direction:column;gap:14px;align-self:start}
+@media (max-width:900px){.anim-grid{grid-template-areas:"prev" "rack" "bottom";grid-template-rows:auto}}
+.sq{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;box-shadow:inset 0 0 0 1px rgba(128,128,128,.55)}
+.dropzone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;min-height:min(62vh,560px);padding:32px 20px;border:2px dashed var(--line);border-radius:14px;background:var(--panel);cursor:pointer;transition:border-color .15s,background .15s}
+.dropzone:hover,.dropzone.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--panel))}
+.dropzone:focus-within{outline:2px solid var(--accent);outline-offset:3px}
+.dropzone input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.dropzone .dz-ico{width:44px;height:44px;color:var(--accent)}
+.dropzone .dz-title{font:700 1.35rem var(--f-display)}
+.dropzone .dz-sub{font-size:.95rem;color:var(--muted)}
+.dropzone .note{max-width:52ch}
+@media (min-width:901px){
+  .grid>.rack{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain;padding-right:6px;scrollbar-width:thin}
+  .anim-grid>.rack{align-self:start}
+}
+.toggle{position:relative;display:inline-flex;align-items:center;gap:9px;padding:6px 14px 6px 8px;border-radius:999px;border:1px solid var(--line);background:var(--bg);font:600 .86rem var(--f-body);color:var(--ink);cursor:pointer;user-select:none;transition:background .15s,border-color .15s}
+.toggle input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.toggle .knob{position:relative;width:30px;height:17px;border-radius:999px;background:var(--line);transition:background .15s;flex:none}
+.toggle .knob::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.35);transition:transform .15s}
+.toggle:has(input:checked){border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.toggle:has(input:checked) .knob{background:color-mix(in srgb,var(--accent-ink) 30%,transparent)}
+.toggle:has(input:checked) .knob::after{transform:translateX(13px);background:var(--accent-ink)}
+.toggle:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.mp4row{display:flex;align-items:stretch;gap:8px}
+.pbar{width:110px;border:1px solid var(--line);border-radius:7px;background:var(--bg);overflow:hidden;display:flex}
+.pbar[hidden]{display:none!important}
+.pbar i{display:block;width:0;background:var(--accent);transition:width .1s linear}
+/* tutorial */
+.tour{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);padding:0;width:min(580px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.tour::backdrop{background:rgba(8,9,14,.62)}
+.tour-art{position:relative;aspect-ratio:16/10;background:#06070b;overflow:hidden;border-bottom:1px solid var(--line)}
+.tour-body{padding:16px 20px 4px;min-height:9.5rem}
+.tour h2{font:700 1.22rem/1.25 var(--f-display);margin:4px 0 8px;text-wrap:balance}
+.tour-text p{margin:0 0 8px;font-size:.92rem}
+.tour-text ul{margin:0 0 8px;padding-left:1.1rem;font-size:.9rem}
+.tour-text li{margin:2px 0}
+.tour-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 20px 16px}
+.dots{display:flex;gap:7px}
+.dots button{width:9px;height:9px;border-radius:50%;border:0;padding:0;background:var(--line);cursor:pointer}
+.dots button[aria-current="step"]{background:var(--accent)}
+.tstate{position:absolute;inset:0;opacity:0;transition:opacity .6s ease}
+.tstate.on{opacity:1}
+.tstate img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.tcap{position:absolute;left:12px;bottom:12px;font:600 .78rem var(--f-body);padding:4px 10px;border-radius:999px;background:rgba(18,19,27,.82);color:#e7e8f1;border:1px solid rgba(255,255,255,.14)}
+.mock{position:absolute;inset:14px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:#12131b;display:flex;flex-direction:column;overflow:hidden}
+.mock-bar{display:flex;gap:6px;padding:8px;border-bottom:1px solid rgba(255,255,255,.1)}
+.mpill{font:600 .74rem var(--f-body);padding:3px 10px;border-radius:6px;color:#9a9fb8;transition:background .6s,color .6s}
+.mpill.on{background:#8f86ff;color:#12131b}
+.mock-body{position:relative;flex:1}
+.mock-body .tstate{display:grid;grid-template-columns:1.6fr 1fr;gap:10px;padding:10px}
+.mframe{position:relative;background:#000;border-radius:6px;overflow:hidden}
+.mframe img{object-fit:contain}
+.mframe .mlogo{object-fit:contain;padding:0 8%}
+.mside{display:flex;flex-direction:column;gap:7px;padding-top:2px}
+.mside i{display:block;height:9px;border-radius:5px;background:#2d3044}
+.mside i:nth-child(odd){width:70%}
+.mside b{display:block;height:9px;border-radius:5px;background:#8f86ff;width:45%}
+.tour-art.withchips .tstate img{height:calc(100% - 64px)}
+.tchips{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:6px;flex-wrap:wrap;padding:0 10px}
+.tchips span{display:inline-flex;align-items:center;gap:5px;font:500 .74rem var(--f-body);padding:3px 9px;border-radius:999px;background:rgba(18,19,27,.85);color:#e7e8f1;border:1px solid rgba(255,255,255,.14);transition:background .4s,color .4s}
+.tchips span.on{background:#8f86ff;color:#12131b;border-color:#8f86ff}
+.tchips i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.mframe .msf{opacity:0;transition:opacity .35s ease}
+.mframe .msf.on{opacity:1}
+.mprev{display:flex;flex-direction:column;gap:7px;min-width:0;min-height:0}
+.mprev .mframe{flex:1;min-height:0}
+.mscrub{position:relative;height:12px;flex:none}
+.mtrack{position:absolute;left:0;right:0;top:5px;height:3px;border-radius:2px;background:#2d3044}
+.mthumb{position:absolute;top:1px;width:11px;height:11px;margin-left:-5px;border-radius:50%;background:#8f86ff;left:10%;transition:left .7s ease}
+.mchips{display:flex;gap:4px;flex-wrap:wrap;flex:none}
+.mchips span{font:500 .62rem var(--f-body);padding:2px 7px;border-radius:999px;border:1px solid #2d3044;color:#9a9fb8;transition:background .4s,color .4s,border-color .4s;white-space:nowrap}
+.mchips span.on{background:#8f86ff;color:#12131b;border-color:#8f86ff}
+@media (prefers-reduced-motion:reduce){.mthumb,.mchips span{transition:none}}
+.mframe canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.tour-art.tall{aspect-ratio:auto}
+.t3{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
+.t3 figure{margin:0;position:relative;aspect-ratio:4/3;background:#000;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.12)}
+.t3 figure img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.t3 figcaption{position:absolute;left:8px;top:8px;font:600 .74rem var(--f-body);padding:3px 9px;border-radius:999px;background:rgba(18,19,27,.85);color:#e7e8f1;border:1px solid rgba(255,255,255,.14)}
+.t3card{background:#12131b;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:9px 10px;color:#e7e8f1;display:flex;flex-direction:column;gap:7px;min-width:0}
+.t3card b{font:600 .78rem var(--f-body)}
+.t3card small{font:.7rem var(--f-mono);color:#9a9fb8}
+.t3delay{display:flex;height:22px;border-radius:5px;overflow:hidden;font:600 .66rem var(--f-body)}
+.t3delay span{display:flex;align-items:center;padding:0 7px;white-space:nowrap;overflow:hidden}
+.t3delay .blk{flex:2;background:repeating-linear-gradient(135deg,#000 0 6px,#16171f 6px 12px);color:#9a9fb8;border:1px solid #2d3044;border-right:0;border-radius:5px 0 0 5px}
+.t3delay .go{flex:3;background:#8f86ff;color:#12131b}
+.t3smb{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:end}
+.t3smb>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.lv{display:grid;gap:2px}
+.lv.one{grid-template-columns:repeat(1,9px)}
+.lv.all{grid-template-columns:repeat(8,9px)}
+.lv i{width:9px;height:9px;border-radius:2px;background:#8f86ff}
+.lv.one i{background:#8f86ff}
+.lv.all i{background:#5fd39a}
+@media (max-width:520px){.t3{grid-template-columns:1fr}.t3 figure{aspect-ratio:16/9}}
+.tart-empty{position:absolute;inset:0;display:grid;place-items:center;color:#9a9fb8;font-size:.85rem;padding:20px;text-align:center}
+@media (prefers-reduced-motion:reduce){.tstate,.mpill,.tchips span{transition:none}}
+[data-ipl-only].na,.na[data-random-over]{opacity:.55}
+body:not(.promo) .promo-only,body:not(.random) .random-only{display:none}
+.fallback video{width:100%;border-radius:4px;background:#000}
+.fallback img{max-width:100%;image-rendering:pixelated;border:1px dashed var(--line);border-radius:4px}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>GC-anim-Wii Studio</h1>
+    <div class="hdr-right">
+    <div class="langwrap" data-no-i18n>
+      <button type="button" class="langbtn" id="langBtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="langMenu">
+        <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M20 18h-1.44a.6.6 0 0 1-.4-.12.8.8 0 0 1-.23-.31L17 15h-5l-1 2.54a.8.8 0 0 1-.22.3.6.6 0 0 1-.4.14H9l4.55-11.47h1.89zm-3.53-4.31L14.89 9.5a12 12 0 0 1-.39-1.24q-.09.37-.19.69l-.19.56-1.58 4.19zm-6.3-1.58a13.4 13.4 0 0 1-2.91-1.41 11.46 11.46 0 0 0 2.81-5.37H12V4H7.31a4 4 0 0 0-.2-.56C6.87 2.79 6.6 2 6.6 2l-1.47.5s.4.89.6 1.5H0v1.33h2.15A11.23 11.23 0 0 0 5 10.7a17.2 17.2 0 0 1-5 2.1q.56.82.87 1.38a23.3 23.3 0 0 0 5.22-2.51 15.6 15.6 0 0 0 3.56 1.77zM3.63 5.33h4.91a8.1 8.1 0 0 1-2.45 4.45 9.1 9.1 0 0 1-2.46-4.45"/></svg>
+        <span id="langName">English</span>
+        <svg class="chev" viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="m17.5 4.75-7.5 7.5-7.5-7.5L1 6.25l9 9 9-9z"/></svg>
+      </button>
+      <ul class="langmenu" id="langMenu" role="listbox" aria-label="Language" hidden></ul>
+    </div>
+    <button type="button" class="themebtn" id="helpBtn" aria-label="Show the tutorial" title="Show the tutorial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.5-2.7 4"/><circle cx="12" cy="17.3" r=".6" fill="currentColor"/></svg></button>
+    <button type="button" class="themebtn" id="themeBtn" data-no-i18n aria-label="Switch to light theme" title="Switch to light theme"></button>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tabBtnAnim" aria-selected="true" aria-controls="tabAnim" type="button">Animation</button>
+      <button role="tab" id="tabBtnLogo" aria-selected="false" aria-controls="tabLogo" type="button">Logotype</button>
+    </div>
+    </div>
+  </header>
+
+  <!-- ===================== ANIMATION ===================== -->
+  <section id="tabAnim" role="tabpanel" aria-labelledby="tabBtnAnim">
+    <label class="dropzone" id="iplEmpty" for="iplFile">
+      <input type="file" id="iplFile">
+      <svg class="dz-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+      <span class="dz-title">Drop your IPL here</span>
+      <span class="dz-sub">or click to choose ipl.bin</span>
+      <span class="note" data-i18n-html>The models, textures and animation are read from your own dump (<code>ipl.bin</code>, scrambled or not, any region). It is stored only in this browser, never uploaded, so you won't need to load it again next time.</span>
+      <span class="warn" id="iplErr" hidden></span>
+    </label>
+    <div class="grid anim-grid" id="animGrid" hidden>
+      <div class="a-prev">
+        <div class="card" id="previewCard">
+          <div class="row between">
+            <span class="label">Preview <span data-no-i18n id="previewMode">- IPL</span></span>
+            <div class="row" id="previewTools" hidden>
+              <div class="mp4row">
+                <div class="pbar" id="mp4Box" role="progressbar" aria-label="Export progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><i id="mp4Fill"></i></div>
+                <button class="btn small" type="button" id="mp4Btn" title="Exports the whole animation at 60 fps with the current settings and aspect ratio."><span id="mp4Go">Export MP4</span><span id="mp4Stop" hidden>Cancel</span></button>
+              </div>
+              <div class="seg" role="group" aria-label="Aspect ratio">
+                <button type="button" id="ar43" aria-pressed="true">4:3</button><button type="button" id="ar169" aria-pressed="false">16:9</button>
+              </div>
+            </div>
+          </div>
+          <div id="iplView" hidden>
+            <div class="screen" id="screen"><canvas id="frameCv" width="592" height="448" aria-label="Rendered frame of the boot animation"></canvas><div class="busy" id="busy" hidden>Rendering…</div></div>
+            <div class="scrub">
+              <button class="btn small" type="button" id="fPrev" aria-label="Previous frame">◀</button>
+              <input type="range" id="frame" min="1" max="331" step="1" aria-label="Frame">
+              <button class="btn small" type="button" id="fNext" aria-label="Next frame">▶</button>
+              <output id="frameOut" class="mono"></output>
+            </div>
+            <div class="presets" id="moments"></div>
+            <div class="row between">
+              <label class="toggle"><input type="checkbox" id="useLogo"><span class="knob" aria-hidden="true"></span><span>Show the custom logotype</span></label>
+              <button class="btn small" type="button" id="iplForget">Forget IPL</button>
+            </div>
+            <div class="row between"><span class="note" id="iplInfo"></span><span class="note" id="renderTime"></span></div>
+            <span class="note" id="mp4Msg"></span>
+            <div class="fallback" id="mp4Fallback" hidden>
+              <p class="note">Saving isn't available in this view. Right-click or long-press the video to save it.</p>
+              <video id="mp4Video" controls loop muted playsinline></video>
+            </div>
+            <div class="notes" id="gxWarn"></div>
+          </div>
+        </div>
+      </div>
+      <div class="rack">
+        <details class="card" open>
+          <summary>General</summary>
+          <div class="body">
+            <div class="field wide"><span>Intro</span><select id="m-intro"><option value="ipl">Boot animation (IPL)</option><option value="promo">Promo videos' intro</option></select></div>
+            <p class="note promo-only">Promo intro: the theme color colors the logo and the light. Small cube, tiles, trail, drop, camera and the SMB easter egg do nothing. It plays promo.wav if present.</p>
+            <label class="chk"><input type="checkbox" id="m-skip"> A or Start skips the animation</label>
+            <label class="chk" data-ipl-only><input type="checkbox" id="m-camera"> C-stick orbits the camera</label>
+            <label class="chk"><input type="checkbox" id="m-force_4_3"> Always 4:3</label>
+            <div class="field"><span>Jingle volume</span><input type="range" id="m-volume" min="0" max="255" step="1"><output data-m="volume"></output></div>
+            <div class="field"><span>Delay</span><input type="range" id="m-delay" min="0" max="10000" step="100"><output data-m="delay"></output></div>
+            <p class="note">Delay: black screen before the animation, for slow HDMI screens and mods. It also gives a Wii Remote time to connect for the SMB easter egg.</p>
+            <div class="field wide" data-ipl-only><span>SMB easter egg</span><select id="m-smb"><option value="1-1">World 1-1 only</option><option value="full">The whole game</option></select></div>
+            <p class="note" data-ipl-only>Super Mario Bros.: needs your own smb.nes next to boot.dol. Press B early in the animation to play.</p>
+          </div>
+        </details>
+        <div class="card">
+          <div class="row between">
+            <span class="label">Quick presets</span>
+            <button class="btn small" type="button" id="presetDefault"><i class="sq" style="background:rgb(95,80,190)"></i>Default (indigo)</button>
+          </div>
+          <span class="sublabel">GameCube hardware</span>
+          <div class="presets" id="hwPresets"></div>
+          <span class="sublabel">Multicolor</span>
+          <div class="presets" id="animPresets"></div>
+        </div>
+        <details class="card" open>
+          <summary>Theme color</summary>
+          <div class="body">
+            <div id="opt-color"></div>
+            <div class="row"><label class="chk"><input type="checkbox" id="m-colorRandom"> Random at each boot</label><button class="btn small" type="button" id="reroll" hidden>New draw</button></div>
+            <p class="note random-only">Each boot draws a new color scheme, replacing the theme color, small cube, tiles, pattern and trail. The preview shows one possible draw.</p>
+            <div class="field"><span>Hue shift</span><input type="range" id="m-hue" min="-180" max="180" step="1"><output data-m="hue"></output></div>
+            <div class="field"><span>Saturation</span><input type="range" id="m-saturation" min="0" max="200" step="1"><output data-m="saturation"></output></div>
+            <div class="field"><span>Brightness</span><input type="range" id="m-brightness" min="0" max="200" step="1"><output data-m="brightness"></output></div>
+            <p class="note">The theme color maps the cube's indigo onto your color and is the default for everything below. Hue, saturation and brightness apply on top of every color.</p>
+          </div>
+        </details>
+
+        <details class="card" open data-ipl-only data-random-over>
+          <summary>Small cube</summary>
+          <div class="body">
+            <p class="note promo-only">Not used by the promo intro.</p>
+            <p class="note random-only">Replaced by the random scheme, except the drop.</p>
+            <div class="field wide"><span>Color</span><select id="m-cubeMode"><option value="default">Theme color</option><option value="color">Own color</option><option value="tiles">Follow the tiles</option></select></div>
+            <div class="optrow" id="cubeRgbRow"><span>Cube color</span><input type="color" id="m-cubeRgb" aria-label="Cube color"><small id="cubeRgbTxt"></small><span></span></div>
+            <div id="opt-drop"></div>
+            <div class="field wide"><span>Drop blend</span><select id="m-drop_blend"><option value="fall">On the final fall</option><option value="jump">Rise and fall</option><option value="off">Off</option></select></div>
+          </div>
+        </details>
+
+        <details class="card" open data-ipl-only data-random-over>
+          <summary>Tiles</summary>
+          <div class="body">
+            <p class="note promo-only">Not used by the promo intro.</p>
+            <p class="note random-only">Replaced by the random scheme.</p>
+            <div class="field wide"><span>Colors</span><select id="m-tilesMode"><option value="default">Theme color</option><option value="list">List of colors</option><option value="rainbow">Rainbow</option></select></div>
+            <div id="tileListBox" class="body" style="padding:0">
+              <div class="listed" id="tileList"></div>
+              <div class="row"><button class="btn small" type="button" id="tileAdd">Add color</button><span class="note" id="tileCount"></span></div>
+              <div class="field wide"><span>Pattern</span><select id="m-tiles_mode"><option value="cycle">Cycle (A B C A B C…)</option><option value="spread">Spread (bands along the path)</option></select></div>
+            </div>
+            <div class="field"><span>Trail</span><input type="range" id="m-trail" min="0" max="16" step="1"><output data-m="trail"></output></div>
+            <p class="note">Trail: new tiles start in the cube's color and reach their own over this many tiles.</p>
+          </div>
+        </details>
+
+        <details class="card">
+          <summary>Logo &amp; glass cube</summary>
+          <div class="body">
+            <div id="opt-logo"></div>
+            <div id="opt-glass"></div>
+            <div class="field"><span>Glass flashes</span><input type="range" id="m-glass_opacity" min="0" max="400" step="5"><output data-m="glass_opacity"></output></div>
+            <p class="note">Without a logo color, the logo continues the tile pattern (the next tile in cycle mode, the last one in spread mode), or uses the theme color. The glass cube follows the logo unless it has its own color.</p>
+          </div>
+        </details>
+
+        <details class="card">
+          <summary>Background &amp; text</summary>
+          <div class="body">
+            <div id="opt-background"></div>
+            <div id="opt-text"></div>
+            <p class="note">Without a text color, NINTENDO and the logotype are white on dark backgrounds and black on light ones.</p>
+          </div>
+        </details>
+
+        <details class="card">
+          <summary>Letters &amp; logotype</summary>
+          <div class="body">
+            <div class="field wide"><span>Letters</span><input type="text" id="m-letters" maxlength="16" placeholder="NINTENDO" aria-label="Letters replacing NINTENDO"></div>
+            <div class="field wide"><span>Spacing</span><select id="m-letters_spacing"><option value="natural">Natural</option><option value="fill">Fill NINTENDO's width</option></select></div>
+            <div class="field wide"><span>Image file</span><input type="text" id="m-image" placeholder="logo.png" aria-label="Logotype image file"></div>
+            <div class="row"><label class="btn small file">Preview another image<input type="file" id="extImg" accept="image/png,image/jpeg,image/bmp,.tga"></label><button class="btn small" type="button" id="extClear" hidden>Use the Logotype tab</button></div>
+            <p class="note" id="imgNote"></p>
+          </div>
+        </details>
+
+        <div class="row"><button class="btn" type="button" id="resetModel">Reset all animation settings</button></div>
+      </div>
+      <div class="a-bottom">
+        <details class="card" id="boardCard">
+          <summary>End of the animation</summary>
+          <div class="body">
+          <div class="scene">
+            <canvas id="sceneCv" width="352" height="40" aria-label="Logotype on the background color"></canvas>
+            <div class="letters" id="lettersView"></div>
+            <p class="note" id="lettersNote"></p>
+          </div>
+          <div class="sw-grid" id="swatches"></div>
+          <span class="label">Tiles, in the order the cube lays them</span>
+          <div class="tiles" id="tiles"></div>
+          <p class="note" data-i18n-html>Colors are computed with the program's own code (<code>recolor.c</code> and the color part of <code>scene.c</code>), so they match what the Wii applies. Cube, logo, drop and glass show what each target does to the models' indigo (95,80,190).</p>
+          </div>
+        </details>
+
+        <details class="card" data-ipl-only>
+          <summary>Color timeline</summary>
+          <div class="body">
+            <div class="tlwrap"><div class="tl" id="timeline"></div></div>
+            <p class="note">Columns are stages, not frames: the middle of each roll, then the final jump. A hatched cell is a tile not laid yet.</p>
+          </div>
+        </details>
+
+        <div class="card">
+          <div class="row between">
+            <span class="label">gc-anim.ini</span>
+            <div class="row">
+              <label class="btn small file">Load .ini<input type="file" id="iniFile" accept=".ini,.txt,text/plain"></label>
+              <button class="btn small" type="button" id="iniCopy">Copy</button>
+            </div>
+          </div>
+          <textarea id="iniOut" rows="12" readonly aria-label="Generated gc-anim.ini"></textarea>
+          <div class="notes" id="iniNotes"></div>
+          <details>
+            <summary class="note" style="cursor:pointer">Paste an ini instead</summary>
+            <div style="display:flex;flex-direction:column;gap:8px;padding-top:8px">
+              <textarea id="iniPaste" rows="6" aria-label="Paste gc-anim.ini"></textarea>
+              <div class="row"><button class="btn small" type="button" id="iniApply">Apply pasted ini</button></div>
+            </div>
+          </details>
+          <div class="row">
+            <button class="btn primary" type="button" id="saveBundle">Save gc-anim-wii.zip</button>
+            <label class="chk"><input type="checkbox" id="bundleLogo" checked> Include logo.png from the Logotype tab</label>
+          </div>
+          <span id="bundleMsg" class="note"></span>
+          <p class="note" data-i18n-html>Unzip at the root of the SD card or USB drive: it fills <code>apps/gc-anim-wii/</code>.</p>
+          <div class="fallback" id="bundleFallback" hidden>
+            <p class="note">Saving isn't available in this view. Copy the ini text above, and right-click or long-press the image to save it as logo.png.</p>
+            <img id="bundleImg" alt="logo.png, 352 by 40 pixels">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== LOGOTYPE ===================== -->
+  <section id="tabLogo" role="tabpanel" aria-labelledby="tabBtnLogo" hidden>
+    <div class="grid">
+      <div class="bench">
+        <div class="card">
+          <div class="row between">
+            <span class="label">Pixel view</span>
+            <div class="row">
+              <select id="viewSel" aria-label="Preview">
+                <option value="wii">As on the Wii</option>
+                <option value="i8">Intensity (what's saved)</option>
+              </select>
+              <select id="zoomSel" aria-label="Zoom"><option value="2" selected>2×</option><option value="3">3×</option><option value="4">4×</option><option value="6">6×</option></select>
+            </div>
+          </div>
+          <div class="zoomwrap"><canvas id="zoomCv"></canvas></div>
+          <div class="actual">
+            <figure><canvas id="act1"></canvas><figcaption id="act1cap">1:1 on your background</figcaption></figure>
+          </div>
+          <label class="chk"><input type="checkbox" id="flicker"> Simulate 480i flicker filter (preview only)</label>
+          <div id="status" class="note"></div>
+          <p class="note">The Wii keeps only brightness × opacity of the image. Bright pixels show the text color, darker ones let the background through, so a dark shadow or outline disappears.</p>
+        </div>
+        <div class="card">
+          <span class="label">Export</span>
+          <div class="row"><button class="btn primary" id="saveLogo" type="button">Save logo.png</button><span id="logoMsg" class="note"></span></div>
+          <div class="fallback" id="logoFallback" hidden>
+            <p class="note">Saving isn't available in this view. Right-click or long-press the image to save it.</p>
+            <img id="logoImg" alt="logo.png, 352 by 40 pixels">
+          </div>
+          <p class="note">352 × 40, gray on black: the size of the texture it replaces, so the program uses it pixel for pixel. It is also part of the zip on the Animation tab.</p>
+        </div>
+      </div>
+
+      <div class="rack">
+        <div class="card">
+          <span class="label">Text &amp; font</span>
+          <input type="text" id="text" maxlength="40" aria-label="Logotype text">
+          <div class="row">
+            <label class="btn file">Load font (.ttf .otf .woff .woff2)<input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2"></label>
+            <span id="fontName" class="note"></span>
+            <button class="btn small" type="button" id="fontReset" hidden>Use the sample font</button>
+          </div>
+          <label class="chk"><input type="checkbox" id="upper"> Force uppercase</label>
+          <p class="note">The font file is stored only in this browser and is kept for your next visits.</p>
+        </div>
+
+        <div class="card">
+          <span class="label">Style presets</span>
+          <div class="presets" id="presets"></div>
+          <div class="row">
+            <input type="text" id="presetName" maxlength="24" placeholder="Name this style" aria-label="Preset name" style="flex:1;min-width:9rem;font-size:.9rem">
+            <button class="btn" type="button" id="presetSave">Save current style</button>
+          </div>
+          <div class="presets" id="myPresets"></div>
+          <p class="note">Presets change fill, bevel, outline and glow only. Double-click any slider to put it back to its default.</p>
+        </div>
+
+        <details class="card" open>
+          <summary>Size &amp; spacing</summary>
+          <div class="body">
+            <div class="field"><span>Cap height</span><input type="range" id="capPct" min="30" max="95" step="1"><output data-for="capPct"></output></div>
+            <div class="field"><span>Vertical nudge</span><input type="range" id="vOff" min="-6" max="6" step="0.25"><output data-for="vOff"></output></div>
+            <div class="field"><span>Side margin</span><input type="range" id="margin" min="0" max="40" step="1"><output data-for="margin"></output></div>
+            <div class="field wide"><span>Align</span><select id="align"><option value="center">Center</option><option value="left">Left</option><option value="stretch">Fill width</option></select></div>
+            <div class="field wide"><span>Spacing</span><select id="spacing"><option value="optical">Optical (balances white area)</option><option value="metrics">Font metrics</option></select></div>
+            <div class="field"><span>Tightness</span><input type="range" id="tight" min="0.04" max="0.5" step="0.005"><output data-for="tight"></output></div>
+            <div class="field"><span>Tracking</span><input type="range" id="track" min="-0.2" max="0.6" step="0.005"><output data-for="track"></output></div>
+            <div class="field"><span>Word gap</span><input type="range" id="wordGap" min="0.1" max="1.2" step="0.01"><output data-for="wordGap"></output></div>
+            <span class="label">Pair kerning (in cap heights)</span>
+            <div class="pairs" id="pairs"></div>
+            <div class="row"><button class="btn" type="button" id="resetKern">Reset pair kerning</button><button class="btn" type="button" data-reset="capPct,vOff,margin,align,spacing,tight,track,wordGap">Reset size &amp; spacing</button></div>
+          </div>
+        </details>
+
+        <details class="card" open>
+          <summary>Fill &amp; bevel</summary>
+          <div class="body">
+            <div class="field wide"><span>Fill</span><select id="fillMode"><option value="gradient">Gradient</option><option value="solid">Solid (top level)</option></select></div>
+            <div class="field"><span>Top</span><input type="range" id="lTop" min="0" max="100" step="1"><output data-for="lTop"></output></div>
+            <div class="field"><span>Middle</span><input type="range" id="lMid" min="0" max="100" step="1"><output data-for="lMid"></output></div>
+            <div class="field"><span>Bottom</span><input type="range" id="lBot" min="0" max="100" step="1"><output data-for="lBot"></output></div>
+            <label class="chk"><input type="checkbox" id="useMid"> Use middle level</label>
+            <label class="chk"><input type="checkbox" id="bevelOn"> Bevel</label>
+            <div class="field"><span>Bevel width</span><input type="range" id="bevelW" min="0.25" max="4" step="0.05"><output data-for="bevelW"></output></div>
+            <div class="field"><span>Bevel strength</span><input type="range" id="bevelS" min="0" max="1.5" step="0.01"><output data-for="bevelS"></output></div>
+            <div class="field"><span>Light angle</span><input type="range" id="lightA" min="0" max="360" step="1"><output data-for="lightA"></output></div>
+            <div class="field"><span>Light height</span><input type="range" id="lightE" min="10" max="80" step="1"><output data-for="lightE"></output></div>
+            <button class="btn" type="button" data-reset="fillMode,lTop,lMid,lBot,useMid,bevelOn,bevelW,bevelS,lightA,lightE">Reset fill &amp; bevel</button>
+          </div>
+        </details>
+
+        <details class="card">
+          <summary>Outline &amp; glow</summary>
+          <div class="body">
+            <label class="chk"><input type="checkbox" id="outOn"> Outline</label>
+            <div class="field"><span>Outline level</span><input type="range" id="outL" min="0" max="100" step="1"><output data-for="outL"></output></div>
+            <div class="field"><span>Outline width</span><input type="range" id="outW" min="0.25" max="4" step="0.05"><output data-for="outW"></output></div>
+            <label class="chk"><input type="checkbox" id="glowOn"> Glow</label>
+            <div class="field"><span>Glow level</span><input type="range" id="glowL" min="0" max="100" step="1"><output data-for="glowL"></output></div>
+            <div class="field"><span>Glow radius</span><input type="range" id="glowR" min="0.5" max="8" step="0.1"><output data-for="glowR"></output></div>
+            <div class="field"><span>Glow opacity</span><input type="range" id="glowA" min="0" max="1" step="0.01"><output data-for="glowA"></output></div>
+            <button class="btn" type="button" data-reset="outOn,outL,outW,glowOn,glowL,glowR,glowA">Reset outline &amp; glow</button>
+          </div>
+        </details>
+
+        <details class="card">
+          <summary>™ mark</summary>
+          <div class="body">
+            <label class="chk"><input type="checkbox" id="tmOn"> Add ™ after the text</label>
+            <div class="field wide"><span>Position</span><select id="tmPos"><option value="top">Upper right</option><option value="bottom">Lower right</option></select></div>
+            <div class="field"><span>Size</span><input type="range" id="tmScale" min="0.15" max="0.5" step="0.01"><output data-for="tmScale"></output></div>
+            <div class="field"><span>Gap</span><input type="range" id="tmGap" min="0" max="0.4" step="0.01"><output data-for="tmGap"></output></div>
+            <button class="btn" type="button" data-reset="tmOn,tmPos,tmScale,tmGap">Reset ™</button>
+          </div>
+        </details>
+
+        <details class="card">
+          <summary>Reference overlay &amp; quality</summary>
+          <div class="body">
+            <p class="note">Load any reference image to compare spacing and position. It is stretched to 352 × 40 and drawn over the pixel view only.</p>
+            <div class="row">
+              <label class="btn file">Load reference<input type="file" id="refFile" accept="image/*"></label>
+              <button class="btn" type="button" id="refClear">Remove</button>
+            </div>
+            <div class="field"><span>Overlay opacity</span><input type="range" id="refA" min="0" max="1" step="0.01"><output data-for="refA"></output></div>
+            <div class="field wide"><span>Supersampling</span><select id="ss"><option value="2">2× (fast)</option><option value="4">4×</option><option value="6">6×</option><option value="8">8× (finest)</option></select></div>
+            <button class="btn" type="button" id="resetAll">Reset all logotype settings</button>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+</div>
+
+<dialog class="tour" id="tour" aria-labelledby="tourTitle" aria-describedby="tourText">
+  <div class="tour-art" id="tourArt"></div>
+  <div class="tour-body">
+    <span class="label" id="tourStep"></span>
+    <h2 id="tourTitle"></h2>
+    <div class="tour-text" id="tourText"></div>
+  </div>
+  <div class="tour-foot">
+    <div class="dots" id="tourDots"></div>
+    <div class="row">
+      <button class="btn small" type="button" id="tourSkip">Skip</button>
+      <button class="btn small" type="button" id="tourBack">Back</button>
+      <button class="btn small primary" type="button" id="tourNext">Next</button>
+    </div>
+  </div>
+</dialog>
+<script>
+/*@INCLUDE src/i18n/fr.js*/
+/*@INCLUDE src/i18n/es.js*/
+/*@INCLUDE src/i18n/pt-BR.js*/
+/*@INCLUDE src/i18n/pt-PT.js*/
+/*@INCLUDE src/i18n/it.js*/
+/*@INCLUDE src/i18n/de.js*/
+/*@INCLUDE src/i18n/ja.js*/
+/*@INCLUDE src/i18n/zh-CN.js*/
+/*@INCLUDE src/i18n/ko.js*/
+/*@INCLUDE src/i18n.js*/
+/*@INCLUDE src/recolor.js*/
+/*@INCLUDE src/config.js*/
+/*@INCLUDE src/colors.js*/
+/*@INCLUDE src/textimg.js*/
+/*@INCLUDE src/logo.js*/
+/*@INCLUDE src/zip.js*/
+/*@INCLUDE src/mp4.js*/
+/*@INCLUDE src/ipl.js*/
+/*@INCLUDE src/gcmath.js*/
+/*@INCLUDE src/intro.js*/
+/*@INCLUDE src/anim.js*/
+/*@INCLUDE src/gx.js*/
+/*@INCLUDE src/j3d.js*/
+/*@INCLUDE src/letters_data.js*/
+/*@INCLUDE src/scene.js*/
+/*@INCLUDE src/promo.js*/
+/*@INCLUDE src/app.js*/
+</script>
