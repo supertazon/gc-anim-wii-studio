@@ -1,29 +1,35 @@
 <title>GC-anim-Wii Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Michroma&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Michroma&family=Orbitron:wght@700;900&display=swap">
 <script>try{document.documentElement.dataset.theme=localStorage.getItem("gcas-theme")||"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
 <style>
 /* Layout: tabbed workbench. Each tab = preview bench (left, sticky) + settings rack (right); stacks on phones. */
 :root{
   --bg:#eef0f5; --panel:#ffffff; --ink:#1b1d2a; --muted:#5d6278; --line:#d9dce8;
-  --accent:#5145c9; --accent-ink:#ffffff; --warn:#a1530a; --ok:#1e7a4c; --cube:#3d2fa3;
+  --accent:#5145c9; --accent-ink:#ffffff; --brand-hi:#8f86ff; --brand-lo:#2f2794; --warn:#a1530a; --ok:#1e7a4c; --cube:#3d2fa3;
   --f-display:"Sora","Segoe UI",system-ui,sans-serif;
   --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#12131b; --panel:#1b1d29; --ink:#e7e8f1; --muted:#9a9fb8; --line:#2d3044;
-  --accent:#8f86ff; --accent-ink:#12131b; --warn:#f0a75a; --ok:#5fd39a; color-scheme:dark}}
+  --accent:#8f86ff; --accent-ink:#12131b; --brand-hi:#c9c3ff; --brand-lo:#5a4fd6; --warn:#f0a75a; --ok:#5fd39a; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#12131b; --panel:#1b1d29; --ink:#e7e8f1; --muted:#9a9fb8; --line:#2d3044;
-  --accent:#8f86ff; --accent-ink:#12131b; --warn:#f0a75a; --ok:#5fd39a; color-scheme:dark}
+  --accent:#8f86ff; --accent-ink:#12131b; --brand-hi:#c9c3ff; --brand-lo:#5a4fd6; --warn:#f0a75a; --ok:#5fd39a; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
 .wrap{max-width:1260px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 20px}
 h1{font:700 1.55rem/1.15 var(--f-display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.brand{display:flex;align-items:center;gap:12px;font:inherit}
+.brand-mark{height:44px;width:auto;flex:none}
+.brand-txt{display:flex;flex-direction:column;gap:6px}
+.brand-name{font:700 22px/1 "Orbitron",var(--f-display);letter-spacing:.02em;text-transform:uppercase}
+.brand-sub{font:900 16px/1 "Orbitron",var(--f-display);letter-spacing:.46em;text-transform:uppercase;color:var(--accent)}
+@media (max-width:420px){.brand-mark{height:36px}.brand-name{font-size:18px}.brand-sub{font-size:13px}}
 .hdr-right{display:flex;gap:10px;align-items:center}
 .langwrap{position:relative}
 .langbtn{display:inline-flex;align-items:center;gap:7px;height:2.4rem;padding:0 11px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 .88rem var(--f-body);cursor:pointer}
@@ -252,7 +258,7 @@ body:not(.promo) .promo-only,body:not(.random) .random-only{display:none}
 
 <div class="wrap">
   <header>
-    <h1>GC-anim-Wii Studio</h1>
+    <h1 class="brand" data-no-i18n aria-label="GC-anim-Wii Studio"><svg viewBox="-60.8 -23.9 70.4 29.9" class="brand-mark" aria-hidden="true" focusable="false"><path d="M-30.66,-22.70 L-22.00,-17.70 L-30.66,-12.70 L-39.32,-17.70Z" fill="var(--accent)" opacity="0.642"/><path d="M-40.88,-16.80 L-32.22,-11.80 L-40.88,-6.80 L-49.54,-11.80Z" fill="var(--accent)" opacity="0.796"/><path d="M-20.44,-16.80 L-11.78,-11.80 L-20.44,-6.80 L-29.10,-11.80Z" fill="var(--accent)" opacity="0.488"/><path d="M-51.10,-10.90 L-42.44,-5.90 L-51.10,-0.90 L-59.76,-5.90Z" fill="var(--accent)" opacity="0.95"/><path d="M-10.22,-10.90 L-1.56,-5.90 L-10.22,-0.90 L-18.88,-5.90Z" fill="var(--accent)" opacity="0.33399999999999996"/><path d="M0.00,-5.00 L8.66,0.00 L0.00,5.00 L-8.66,0.00Z" fill="var(--accent)" opacity="0.18"/><path d="M-51.10,-22.90 L-43.73,-18.65 L-51.10,-14.40 L-58.46,-18.65Z" fill="var(--brand-hi)"/><path d="M-58.46,-18.65 L-51.10,-14.40 L-51.10,-5.90 L-58.46,-10.15Z" fill="var(--accent)"/><path d="M-51.10,-14.40 L-43.73,-18.65 L-43.73,-10.15 L-51.10,-5.90Z" fill="var(--brand-lo)"/></svg><span class="brand-txt" aria-hidden="true"><span class="brand-name">GC-anim-Wii</span><span class="brand-sub">Studio</span></span></h1>
     <div class="hdr-right">
     <div class="langwrap" data-no-i18n>
       <button type="button" class="langbtn" id="langBtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="langMenu">
