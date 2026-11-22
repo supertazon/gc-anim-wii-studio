@@ -6,6 +6,7 @@
     <img alt="GC-anim-Wii Studio" src="assets/gc-anim-wii-studio-logo-light-bg.png" width="420">
   </picture>
 </p>
+
 A web page to customize [GC-anim-Wii](https://github.com/supertazon/GC-anim-Wii): edit `gc-anim.ini`, design the "GAMECUBE" logotype, and preview any frame of the boot animation rendered from your own GameCube IPL dump. The dump stays in your browser and is never uploaded; nothing from Nintendo is hosted here. Built using Claude.
 
 ## Use
