@@ -13,7 +13,7 @@ var GCA = GCA || {};
       ntiles: 0, tiles_rainbow: 0, tiles_spread: 0, tiles: [], trail: 0,
       have_logo: 0, logo: [0, 0, 0], have_drop: 0, drop: [0, 0, 0], drop_blend: 0,
       have_glass: 0, glass: [0, 0, 0], glass_opacity: 100,
-      have_background: 0, background: [0, 0, 0], have_text: 0, text: [0, 0, 0],
+      have_background: 0, background: [0, 0, 0], have_promo_background: 0, promo_background: [0, 0, 0], have_text: 0, text: [0, 0, 0],
       letters: "", letters_fill: 0, text_image: "", smb_full: 0
     };
   }
@@ -76,7 +76,7 @@ var GCA = GCA || {};
   }
 
   const KNOWN = ["intro", "skip", "delay", "smb", "camera", "force_4_3", "volume", "color", "colour", "hue", "saturation", "brightness",
-    "cube", "tiles", "tiles_mode", "trail", "logo", "drop", "drop_blend", "glass", "glass_opacity", "background", "bg",
+    "cube", "tiles", "tiles_mode", "trail", "logo", "drop", "drop_blend", "glass", "glass_opacity", "background", "bg", "promo_background",
     "text", "letters", "letters_spacing", "image"];
 
   /* config_load on a string; also reports what the Wii would ignore */
@@ -128,6 +128,7 @@ var GCA = GCA || {};
       else if (K === "glass") col("have_glass", "glass");
       else if (K === "glass_opacity") { const n = atoi(v); c.glass_opacity = n < 0 ? 0 : n > 400 ? 400 : n; }
       else if (K === "background" || K === "bg") col("have_background", "background");
+      else if (K === "promo_background") col("have_promo_background", "promo_background");
       else if (K === "text") col("have_text", "text");
       else if (K === "letters") {
         let out = "";
@@ -154,7 +155,7 @@ var GCA = GCA || {};
       tiles: { mode: "default", list: [[113, 21, 33], [212, 175, 55]] }, tiles_mode: "cycle", trail: 0,
       logo: { on: false, rgb: INDIGO.slice() }, drop: { on: false, rgb: INDIGO.slice() }, drop_blend: "fall",
       glass: { on: false, rgb: INDIGO.slice() }, glass_opacity: 100,
-      background: { on: false, rgb: [0, 0, 0] }, text: { on: false, rgb: [255, 255, 255] },
+      background: { on: false, rgb: [0, 0, 0] }, promo_background: { on: false, rgb: [0, 0, 0] }, text: { on: false, rgb: [255, 255, 255] },
       letters: "", letters_spacing: "natural", image: "logo.png"
     };
   }
@@ -163,7 +164,7 @@ var GCA = GCA || {};
     m.intro = c.intro ? "promo" : "ipl"; m.delay = c.start_delay; m.smb = c.smb_full ? "full" : "1-1"; m.skip = !!c.allow_skip; m.camera = !!c.camera; m.force_4_3 = !!c.force_43; m.volume = c.volume;
     const opt = (key, have) => { m[key] = { on: !!c[have], rgb: c[have] ? c[key].slice() : m[key].rgb }; };
     opt("color", "have_color"); opt("logo", "have_logo"); opt("drop", "have_drop"); opt("glass", "have_glass");
-    opt("background", "have_background"); opt("text", "have_text");
+    opt("background", "have_background"); opt("promo_background", "have_promo_background"); opt("text", "have_text");
     m.color.random = !!c.color_random;
     m.hue = c.hue; m.saturation = c.saturation; m.brightness = c.brightness;
     m.cube = { mode: c.cube_follow ? "tiles" : c.have_cube ? "color" : "default", rgb: c.have_cube && !c.cube_follow ? c.cube.slice() : m.cube.rgb };
@@ -198,6 +199,7 @@ var GCA = GCA || {};
     if (m.glass.on) C.push(`glass = ${rgbStr(m.glass.rgb)}`);
     if (m.glass_opacity !== 100) C.push(`glass_opacity = ${m.glass_opacity}`);
     if (m.background.on) C.push(`background = ${rgbStr(m.background.rgb)}`);
+    if (m.promo_background && m.promo_background.on) C.push(`promo_background = ${rgbStr(m.promo_background.rgb)}`);
     if (m.text.on) C.push(`text = ${rgbStr(m.text.rgb)}`);
     if (C.length) L.push("", "[colors]", ...C);
     const T = [];

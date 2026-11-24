@@ -57,7 +57,7 @@ let M = Object.assign(G.config.modelDefaults(), store.get("gcas-model-v1", {}));
 let iniNotes = [];
 let extI8 = null, extName = "", extSrc = null;
 
-const OPT = [["color", "Theme color"], ["drop", "Drop color"], ["logo", "Logo color"], ["glass", "Glass color"], ["background", "Background"], ["text", "Text color"]];
+const OPT = [["color", "Theme color"], ["drop", "Drop color"], ["logo", "Logo color"], ["glass", "Glass color"], ["background", "Background"], ["promo_background", "Promo background"], ["text", "Text color"]];
 for (const [key, label] of OPT) {
   const box = $("opt-" + key);
   box.className = "optrow";
@@ -135,7 +135,7 @@ function changed(rebuildList) { syncModelUI(rebuildList); store.set("gcas-model-
 /* color fields back to the program's defaults (letters, image and general settings untouched) */
 function resetColors(m) {
   const d = G.config.modelDefaults();
-  for (const k of ["color", "hue", "saturation", "brightness", "cube", "tiles", "tiles_mode", "trail", "logo", "drop", "drop_blend", "glass", "glass_opacity", "background", "text"]) m[k] = d[k];
+  for (const k of ["color", "hue", "saturation", "brightness", "cube", "tiles", "tiles_mode", "trail", "logo", "drop", "drop_blend", "glass", "glass_opacity", "background", "promo_background", "text"]) m[k] = d[k];
 }
 const on = rgb => ({ on: true, rgb });
 const BLACK = [40, 40, 45], SILVER = [175, 178, 186], WHITE = [255, 255, 255], STRIPE_W = [235, 235, 238];
@@ -152,7 +152,7 @@ const HW_PRESETS = [
   /* black and white tiles chosen by their column on screen, so the finished G reads as vertical stripes */
   { name: "Vertical Stripes (Hanshin Tigers)", sw: [BLACK, STRIPE_W], set: m => {
     m.tiles = { mode: "list", list: "WBWBBBBWBWBWWWBW".split("").map(c => (c === "B" ? BLACK : STRIPE_W).slice()) };
-    m.cube = { mode: "tiles", rgb: m.cube.rgb }; m.logo = on(BLACK); m.background = on([128, 128, 132]); } },
+    m.cube = { mode: "tiles", rgb: m.cube.rgb }; m.logo = on(BLACK); m.background = on([128, 128, 132]); m.promo_background = on(STRIPE_W); } },
   { name: "Char's Custom Color", sw: [[200, 70, 35]], set: m => { m.color = on([200, 70, 35]); } }
 ];
 const ANIM_PRESETS = [
@@ -166,7 +166,7 @@ function applyAnimPreset(p) {
   M.tiles = p.rainbow ? { mode: "rainbow", list: M.tiles.list } : { mode: "list", list: p.list.map(c => c.slice()) };
   M.tiles_mode = "cycle"; M.cube = { mode: "tiles", rgb: M.cube.rgb }; M.trail = p.trail;
   M.logo.on = false; M.drop.on = false; M.glass.on = false; M.color.random = false;
-  const d = G.config.modelDefaults(); M.background = d.background; M.text = d.text;
+  const d = G.config.modelDefaults(); M.background = d.background; M.promo_background = d.promo_background; M.text = d.text;
   iniNotes = []; changed();
 }
 /* everything as the program does without an ini: original colors, original GAMECUBE logotype */

@@ -306,6 +306,7 @@ GCA.i18nDicts["ja"] = {
 "Logo color": "ロゴの色",
 "Glass color": "ガラスの色",
 "Background": "背景",
+"Promo background": "プロモ版イントロの背景",
 "Text color": "テキストの色",
 "Drop": "落下",
 "Logo": "ロゴ",

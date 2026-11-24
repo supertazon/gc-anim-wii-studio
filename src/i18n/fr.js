@@ -306,6 +306,7 @@ GCA.i18nDicts["fr"] = {
 "Logo color": "Couleur du logo",
 "Glass color": "Couleur du verre",
 "Background": "Fond",
+"Promo background": "Fond de l'intro promo",
 "Text color": "Couleur du texte",
 "Drop": "Chute",
 "Logo": "Logo",

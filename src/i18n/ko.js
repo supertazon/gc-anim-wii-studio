@@ -306,6 +306,7 @@ GCA.i18nDicts["ko"] = {
 "Logo color": "로고 색",
 "Glass color": "유리 색",
 "Background": "배경",
+"Promo background": "홍보 영상 인트로 배경",
 "Text color": "텍스트 색",
 "Drop": "낙하",
 "Logo": "로고",

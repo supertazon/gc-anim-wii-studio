@@ -306,6 +306,7 @@ GCA.i18nDicts["zh-CN"] = {
 "Logo color": "标志颜色",
 "Glass color": "玻璃颜色",
 "Background": "背景",
+"Promo background": "宣传版片头背景",
 "Text color": "文字颜色",
 "Drop": "落下",
 "Logo": "标志",

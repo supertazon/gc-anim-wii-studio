@@ -171,7 +171,7 @@ var GCA = GCA || {};
     P.customFinal = false;
     const tf = cfg.have_logo ? cfg.logo : cfg.have_color ? cfg.color : null;
     const rf = R.setupTarget(tf, cfg);
-    const tl = cfg.have_glass ? cfg.glass : cfg.have_color ? cfg.color : null;
+    const tl = cfg.have_glass ? cfg.glass : cfg.have_logo ? cfg.logo : cfg.have_color ? cfg.color : null;
     const rl = { dh: cfg.hue, ks: cfg.saturation / 100, kv: cfg.brightness / 100 };
     if (tl) {
       const [h0, s0] = hsvOf([115 / 255, 191 / 255, 1]), [h1, s1] = hsvOf([tl[0] / 255, tl[1] / 255, tl[2] / 255]);
@@ -200,7 +200,24 @@ var GCA = GCA || {};
       for (const k of ["col_line", "col_trail", "col_core", "col_halo", "col_edge"]) S[k] = xf(rl, S[k]);
       S.bloom_tint = xf(rl, A.bloom_tint);
     }
-    if (cfg.have_background) S.bg = cfg.background.map(v => v / 255);
+    /* the promo's background: promo_background, else background */
+    if (cfg.have_promo_background) S.bg = cfg.promo_background.map(v => v / 255);
+    else if (cfg.have_background) S.bg = cfg.background.map(v => v / 255);
+    /* a background: composited with the coverage mask. On a light one (luma > 128, as the IPL
+       intro's black text) the light turns into ink: its colours darkened to the theme's brightness */
+    S.bgMode = S.bg[0] + S.bg[1] + S.bg[2] > 0;
+    const bgLuma = Math.floor((299 * c8(S.bg[0]) + 587 * c8(S.bg[1]) + 114 * c8(S.bg[2])) / 1000);
+    S.inkV = 1;
+    if (S.bgMode && bgLuma > 128) {
+      S.inkV = Math.min(tl ? Math.max(tl[0], tl[1], tl[2]) / 255 : 0.35, 0.55);
+      const k = S.inkV, sc = c => c.map(v => v * k);
+      S.look_cyan = S.look_cyan.map(sc); S.look_glass = S.look_glass.map(sc); S.shell = S.shell.map(sc);
+      for (const key of ["col_line", "col_trail", "col_core", "col_halo", "col_edge"]) S[key] = sc(S[key]);
+      S.bloom_tint = sc(S.bloom_tint);
+    }
+    const tc = cfg.have_text ? cfg.text.map(v => v / 255) : bgLuma > 128 ? [0, 0, 0] : [1, 1, 1];
+    S.txt_gc = tc; S.txt_nin = tc.map((v, c) => S.bg[c] + (v - S.bg[c]) * 0.7);
+    if (S.bgMode) return;
     const customText = cfg.have_text || cfg.have_background;
     const txt = cfg.have_text ? cfg.text.map(v => v / 255) : [1, 1, 1], bg = S.bg;
     S.gc_rgb.forEach((k, i) => {
@@ -300,9 +317,15 @@ var GCA = GCA || {};
     gx.SetVtxAttrFmt(1, 9, 1, 4, 0); gx.SetVtxAttrFmt(1, 13, 1, 4, 0);
     gx.SetCurrentMtx(0);
   }
+  /* background compositing: each picture is drawn twice, in colour and as a coverage mask
+     (how much of the pixel is covered: 1 for the solid logo, the light's intensity for the light);
+     out = colour + background * (1 - mask). In the mask pass every colour turns grey */
+  let MASK = false, MASK_DIV = 1;
+  const maskOf = k => { const g = clampf(Math.max(k[0], k[1], k[2]) / 255 / MASK_DIV, 0, 1); return rgb(g, g, g, 1); };
   const blendAdd = gx => gx.SetBlendMode(1, 1, 1, 0);
   const blendNone = gx => gx.SetBlendMode(0, 1, 0, 0);
   function tevModulate(gx, tex, k, scale) {
+    if (MASK) k = maskOf(k);
     gx.SetNumTevStages(1); gx.SetTevKColor(0, k); gx.SetTevKColorSel(0, 0x0C); gx.SetTevKAlphaSel(0, 0x1C);
     if (tex) { gx.LoadTexObj(tex, 0); gx.SetTevOrder(0, 0, 0, 0xff); gx.SetTevColorIn(0, 15, 8, 14, 15); }
     else { gx.SetTevOrder(0, 0xff, 0xff, 0xff); gx.SetTevColorIn(0, 15, 15, 15, 14); }
@@ -376,6 +399,14 @@ var GCA = GCA || {};
     for (let i = 0; i < v.length; i += 3) gx.Position3s16(v[i], v[i + 1], v[i + 2]);
     gx.End();
   }
+  /* text colour: the promo's own ramp; on a background, the text colour faded in by that ramp
+     (in the mask pass, the ramp's intensity) */
+  function textCol(S, keys, def, txt, tt) {
+    if (!S.bgMode && !MASK) return ramp3(keys, tt);
+    const d = ramp3(def, tt), m = clampf(Math.max(d[0], d[1], d[2]) / Math.max(...def[def.length - 1][1]), 0, 1);
+    if (MASK) return [m * MASK_DIV, m * MASK_DIV, m * MASK_DIV];   /* (maskOf divides it back) */
+    return [txt[0] * m, txt[1] * m, txt[2] * m];
+  }
   function drawLayer(P, gx, look, t) {
     const S = P.col, [Av, Bv] = lookAB(P, look, t);
     const Mx = mul(P.base, mul(P.el[EL_LOGO], logoMatrix()));
@@ -394,7 +425,12 @@ var GCA = GCA || {};
     setupArrays(gx, P.logo.m);
     for (let i = 0; i < P.nsh; i++) {
       const fin = look === 1 && P.customFinal, g = fin ? ramp(A.grade, t) : 0, Ac = S.look_cyan[0], Bc = S.look_cyan[1];
-      if (P.shTex[i] >= 0) {
+      if (MASK) {
+        /* glass look: as translucent as its light; solid look: fully covered */
+        if (P.shTex[i] < 0 && look === 0) continue;
+        const w = look === 0 ? clampf(ramp(A.glass, t) * S.glass_opacity, 0, 1) : 1;
+        MASK = false; tevModulate(gx, null, rgb(w, w, w, 1)); MASK = true;
+      } else if (P.shTex[i] >= 0) {
         if (fin) tevLookFinal(gx, P.lumTex[P.shTex[i]], P.finTex[P.shTex[i]], Ac, Bc, g);
         else tevLook(gx, P.lumTex[P.shTex[i]], Av, Bv);
       } else {
@@ -410,12 +446,12 @@ var GCA = GCA || {};
     const bx = A.gamecube_box, gg = P.gcGlyph;
     const sx = (bx[2] - bx[0] + 1) / (gg[2] - gg[0] + 1), sy = (bx[3] - bx[1] + 1) / (gg[3] - gg[1] + 1);
     const x0 = bx[0] - gg[0] * sx, y0 = bx[1] - gg[1] * sy;
-    let col = ramp3(S.gc_rgb, tt);
+    let col = textCol(S, S.gc_rgb, A.gamecube_rgb, S.txt_gc, tt);
     quadDesc(gx, mul(P.base, P.el[EL_GC]));
     tevModulate(gx, P.letters.m.texobj[0], rgb(col[0], col[1], col[2], 1));
     rect(gx, x0, y0, x0 + P.gcW * sx, y0 + P.gcH * sy, 0, 0, 1, 1);
-    col = ramp3(S.nin_rgb, tt);
-    if (col[0] + col[1] + col[2] > 0.003) {
+    col = textCol(S, S.nin_rgb, A.nintendo_rgb, S.txt_nin, tt);
+    if (ramp3(A.nintendo_rgb, tt).reduce((a, b) => a + b) > 0.003) {
       blendNone(gx);
       tevModulate(gx, null, rgb(col[0], col[1], col[2], 1));
       gx.SetNumTexGens(0);
@@ -531,21 +567,23 @@ var GCA = GCA || {};
       for (let i = 0; i < 16; i++) gx.SetTevOrder(i, 0xff, 0xff, 0xff);
       commonState(gx);
     };
-    /* 1. logo layers */
-    const layer = [null, null];
+    /* 1. logo layers (and, on a background, their masks) */
+    const layer = [null, null], mlayer = [null, null], hasBg = S.bgMode;
     for (let look = 0; look < 2; look++) {
       if (look === 0 ? !(slam || t < A.SLAM_FIRST) : !(slam || t >= A.SLAM_FIRST)) continue;
       begin(); drawLayer(P, gx, look, t); layer[look] = gx.resolveF(VF_NONE);
+      if (hasBg) { MASK = true; MASK_DIV = S.inkV; begin(); drawLayer(P, gx, look, t); mlayer[look] = gx.resolveF(VF_NONE); MASK = false; }
     }
     /* 2. composite: layer copies (full-screen quads, stretched for the slam) + streaks */
-    const N = W * H, scene = new Float32Array(N * 3), s3 = [0, 0, 0];
-    const addLayer = (src, w, y0, y1) => {
+    const N = W * H, scene = new Float32Array(N * 3), mask = hasBg ? new Float32Array(N * 3) : null, s3 = [0, 0, 0];
+    const addLayer = (src, w, y0, y1, dst) => {
       const k = c8(w) / 255;
+      dst = dst || scene;
       for (let py = 0; py < H; py++) {
         const vy = tp - (py + 0.5), v = (vy - y0) / (y1 - y0);
         if (v < 0 || v > 1) continue;
         const sy = v * H - 0.5;
-        for (let x = 0; x < W; x++) { bilin(src, W, H, x, sy, s3); const o = (py * W + x) * 3; scene[o] += s3[0] * k; scene[o + 1] += s3[1] * k; scene[o + 2] += s3[2] * k; }
+        for (let x = 0; x < W; x++) { bilin(src, W, H, x, sy, s3); const o = (py * W + x) * 3; dst[o] += s3[0] * k; dst[o + 1] += s3[1] * k; dst[o + 2] += s3[2] * k; }
       }
     };
     if (slam) {
@@ -554,33 +592,48 @@ var GCA = GCA || {};
       for (const [look, dy, sy, w] of ls) {
         if (w <= 0) continue;
         addLayer(layer[look], w, anchor + (tp - anchor) * sy - dy * ay, anchor + (bt - anchor) * sy - dy * ay);
+        if (hasBg) addLayer(mlayer[look], w, anchor + (tp - anchor) * sy - dy * ay, anchor + (bt - anchor) * sy - dy * ay, mask);
       }
-    } else addLayer(layer[t < A.SLAM_FIRST ? 0 : 1], 1, tp, bt);
+    } else {
+      addLayer(layer[t < A.SLAM_FIRST ? 0 : 1], 1, tp, bt);
+      if (hasBg) addLayer(mlayer[t < A.SLAM_FIRST ? 0 : 1], 1, tp, bt, mask);
+    }
     begin();
-    if (drawStreaks(P, gx, t)) { const st = gx.resolveF(VF_NONE); for (let i = 0; i < N * 3; i++) scene[i] += st[i]; }
+    if (drawStreaks(P, gx, t)) {
+      const st = gx.resolveF(VF_NONE); for (let i = 0; i < N * 3; i++) scene[i] += st[i];
+      if (hasBg) { MASK = true; MASK_DIV = S.inkV; begin(); drawStreaks(P, gx, t); const sm = gx.resolveF(VF_NONE); MASK = false; for (let i = 0; i < N * 3; i++) mask[i] += sm[i]; }
+    }
     for (let i = 0; i < N * 3; i++) scene[i] = Math.round(clampf(scene[i], 0, 255));
+    if (hasBg) for (let i = 0; i < N * 3; i++) mask[i] = Math.round(clampf(mask[i], 0, 255));
     /* 3. glow: thresholded and blurred at 1/2, then 1/4 resolution */
+    /* (on a light background the glow is drawn as ink too: from the mask, in the light's colour) */
+    const ink = hasBg && S.inkV < 1;
     let b1 = null, b2 = null;
     if (glow > 0.001) {
       const W2 = W / 2, H2 = H / 2, W4 = W / 4, H4 = H / 4;
-      const t1 = blur(scene, W, H, W2, H2, true, 1.5 * SCALE, true);
+      const t1 = blur(ink ? mask : scene, W, H, W2, H2, true, 1.5 * SCALE, true);
       b1 = blur(t1, W2, H2, W2, H2, false, 1.5 * SCALE, false);
       const q = mip(b1, W2, H2);
       const t2 = blur(q, W4, H4, W4, H4, true, 2.0 * SCALE, false);
       b2 = blur(t2, W4, H4, W4, H4, false, 2.0 * SCALE, false);
     }
-    /* 4. output: scene, background ("screen"), glow, fade */
-    const bg8 = S.bg.map(v => c8(v)), hasBg = S.bg[0] + S.bg[1] + S.bg[2] > 0;
+    /* 4. output: scene over the background (through the mask), glow, fade */
+    const bg8 = S.bg.map(v => c8(v));
     const sg = glow / (2 * (1 - A.BLOOM_THR)) / 4;
     const k1 = [0, 1, 2].map(c => c8(0.9 * sg * S.bloom_tint[c]) / 255), k2 = [0, 1, 2].map(c => c8(1.2 * sg * S.bloom_tint[c]) / 255);
+    const kk1 = Math.max(...k1) / S.inkV, kk2 = Math.max(...k2) / S.inkV;
     const fa = c8(1 - fade) / 255, img = new Float32Array(N * 3), g1 = [0, 0, 0], g2 = [0, 0, 0];
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const o = (y * W + x) * 3;
       if (b1) { bilin(b1, W / 2, H / 2, (x + 0.5) / 2 - 0.5, (y + 0.5) / 2 - 0.5, g1); bilin(b2, W / 4, H / 4, (x + 0.5) / 4 - 0.5, (y + 0.5) / 4 - 0.5, g2); }
       for (let c = 0; c < 3; c++) {
         let v = scene[o + c];
-        if (hasBg) v = v + bg8[c] * (1 - v / 255);
-        if (b1) { v += clampf(g1[c] * k1[c] * 4, 0, 255); v = Math.min(v, 255); v += clampf(g2[c] * k2[c] * 4, 0, 255); }
+        if (hasBg) v = v + bg8[c] * (1 - mask[o + c] / 255);
+        if (b1 && ink) {
+          /* ink glow: toward the light's colour, by the glow's strength */
+          const a = clampf((g1[c] * kk1 + g2[c] * kk2) * 4 / 255, 0, 1) * 0.5, inkc = 255 * S.bloom_tint[c];
+          v = clampf(v, 0, 255) * (1 - a) + inkc * a;
+        } else if (b1) { v += clampf(g1[c] * k1[c] * 4, 0, 255); v = Math.min(v, 255); v += clampf(g2[c] * k2[c] * 4, 0, 255); }
         v = clampf(v, 0, 255);
         if (fa > 0.001) v = bg8[c] * fa + v * (1 - fa);
         img[o + c] = v;
