@@ -7,15 +7,19 @@
   </picture>
 </p>
 
-A web page to customize [GC-anim-Wii](https://github.com/supertazon/GC-anim-Wii): edit `gc-anim.ini`, design the "GAMECUBE" logotype, and preview any frame of the boot animation rendered from your own GameCube IPL dump. The dump stays in your browser and is never uploaded, nothing from Nintendo is hosted here. Built using Claude.
+https://github.com/user-attachments/assets/775d0a83-4153-4b6e-b38b-15ee6900903d
+
+A web page to customize [GC-anim-Wii](https://github.com/supertazon/GC-anim-Wii): edit `gc-anim.ini`, design the "GAMECUBE" logotype, and preview any frame of the boot animation rendered from your own GameCube IPL dump. The dump stays in your browser and is never uploaded. Built using Claude.
 
 ## Use
 
 Open the page, load your `ipl.bin` (scrambled or not), change the settings, then **Save gc-anim-wii.zip** and unzip it at the root of the SD card or USB drive.
 
-**Export MP4** renders the whole animation (331 frames, 60 fps, 640×480 or 854×480 in 16:9) with the current settings and encodes it in the browser with WebCodecs: H.264 where available (Chrome, Edge, Safari), VP9 otherwise (e.g. Chromium builds without H.264, some Firefox versions). It takes a minute or two.
+The preview renders live the frames from the IPL and [promo](https://youtu.be/CjkYhI2MaPQ?si=BdSUqR9RyB1k-F6U&t=15) animations.
 
-All of GC-anim-Wii's `gc-anim.ini` settings can be edited, including `intro`, `delay`, `color = random` and `[smb]`. The preview and the MP4 follow `intro`: the IPL boot animation, or the promo intro (`src/promo.js`, a port of `promo.c`, 240 pictures at 60 Hz). With `color = random`, the preview shows one possible draw of the scheme (**New draw** for another), made with the program's own drawing code.
+**Export MP4** renders the whole animation with the current settings and encodes it in the browser with WebCodecs (H.264 where available, VP9 otherwise). It takes a minute or two, no audio is included.
+
+All of GC-anim-Wii's `gc-anim.ini` settings can be edited, including `intro`, `delay`, `color = random` and `[smb]`. The preview and the MP4 follow `intro`: the IPL boot animation, or the promo intro (`src/promo.js`, a port of `promo.c`). With `color = random`, the preview shows one possible draw of the scheme (**New draw** for another), made with the program's own drawing code.
 
 A three-slide tutorial opens once, after the first IPL upload; the **?** button in the header shows it again. Its pictures are rendered at that moment from the user's own IPL, so nothing from Nintendo is stored in the page or the repo.
 
